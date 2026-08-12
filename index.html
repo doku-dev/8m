@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feliz Aniversario</title>
+<style>
+  :root{
+    --rose-deep:#c94277;
+    --rose:#ff6f9c;
+    --rose-light:#ffb8d1;
+    --blush:#ffe3ee;
+    --lavender:#b98ee0;
+    --cream:#fff6fa;
+    --gold:#ffd166;
+    --ink:#5a2340;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+    background:
+      radial-gradient(circle at 15% 10%, #ffd6e8 0%, transparent 45%),
+      radial-gradient(circle at 85% 20%, #e5c9ff 0%, transparent 50%),
+      linear-gradient(180deg, var(--cream) 0%, var(--blush) 60%, #ffeaf4 100%);
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color: var(--ink);
+    overflow-x:hidden;
+  }
+
+  /* ---------- SECTION 1: HERO / HEART ---------- */
+  .hero{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:40px 20px 60px;
+    text-align:center;
+  }
+
+  .eyebrow{
+    letter-spacing:4px;
+    text-transform:uppercase;
+    font-size:12px;
+    color:var(--lavender);
+    font-weight:700;
+    margin-bottom:8px;
+    opacity:0;
+    animation: fadeDown 1s ease forwards .2s;
+  }
+
+  h1.title{
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style:italic;
+    font-size: clamp(28px, 6vw, 44px);
+    margin:0 0 6px;
+    color:var(--rose-deep);
+    opacity:0;
+    animation: fadeDown 1s ease forwards .4s;
+  }
+
+  .subtitle{
+    font-size:15px;
+    color:var(--ink);
+    opacity:.75;
+    margin-bottom:36px;
+    max-width:340px;
+    opacity:0;
+    animation: fadeDown 1s ease forwards .6s;
+  }
+
+  @keyframes fadeDown{
+    from{opacity:0; transform:translateY(-14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  /* Heart container */
+  .heart-wrap{
+    position:relative;
+    width:min(78vw, 320px);
+    height:min(78vw, 320px);
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+    filter: drop-shadow(0 18px 30px rgba(201,66,119,.25));
+    transition: transform .15s ease;
+  }
+  .heart-wrap:active{ transform: scale(.96); }
+
+  .heart-wrap.locked{ cursor:default; }
+
+  svg.heart-svg{
+    width:100%;
+    height:100%;
+    overflow:visible;
+  }
+
+  /* pulsing glow behind heart */
+  .glow{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background: radial-gradient(circle, rgba(255,111,156,.35) 0%, transparent 65%);
+    animation: pulse 2.4s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes pulse{
+    0%,100%{ transform:scale(.92); opacity:.6; }
+    50%{ transform:scale(1.05); opacity:1; }
+  }
+
+  /* the outline heart (empty state) */
+  .heart-outline{
+    fill:none;
+    stroke: var(--rose);
+    stroke-width:3;
+  }
+
+  /* fill layer, clipped by percentage using a mask rect that shrinks from bottom */
+  .heart-fill{
+    fill: url(#heartGradient);
+  }
+
+  .fill-mask-rect{
+    transition: y 900ms cubic-bezier(.22,1,.36,1), height 900ms cubic-bezier(.22,1,.36,1);
+  }
+
+  /* soft wobble animation applied on each click */
+  @keyframes heartBeat{
+    0%{ transform: scale(1); }
+    25%{ transform: scale(1.14); }
+    45%{ transform: scale(.96); }
+    65%{ transform: scale(1.08); }
+    100%{ transform: scale(1); }
+  }
+  .beat{
+    animation: heartBeat .6s ease;
+    transform-origin: center;
+  }
+
+  /* shimmer sweep across the fill when it grows */
+  .shimmer{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+  }
+
+  /* progress dots */
+  .progress{
+    display:flex;
+    gap:7px;
+    margin-top:28px;
+  }
+  .dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background: rgba(201,66,119,.25);
+    transition: all .35s ease;
+  }
+  .dot.filled{
+    background: var(--rose-deep);
+    transform: scale(1.25);
+    box-shadow: 0 0 8px rgba(201,66,119,.5);
+  }
+
+  /* phrase bubble */
+  .phrase-box{
+    margin-top:26px;
+    min-height:70px;
+    max-width:360px;
+    padding:0 10px;
+  }
+  .phrase{
+    font-family: Georgia, serif;
+    font-style:italic;
+    font-size: clamp(16px, 4vw, 19px);
+    color: var(--rose-deep);
+    opacity:0;
+    transform: translateY(10px) scale(.98);
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  .phrase.show{
+    opacity:1;
+    transform: translateY(0) scale(1);
+  }
+
+  .hint{
+    margin-top:18px;
+    font-size:12.5px;
+    color: var(--ink);
+    opacity:.5;
+    letter-spacing:.3px;
+  }
+
+  /* floating little hearts + sparkles container */
+  .fx-layer{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:40;
+    overflow:hidden;
+  }
+  .particle{
+    position:absolute;
+    will-change: transform, opacity;
+  }
+
+  /* ambient floating hearts in background of hero */
+  .bg-heart{
+    position:absolute;
+    opacity:.35;
+    animation: float 9s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes float{
+    0%,100%{ transform: translateY(0) rotate(-6deg); }
+    50%{ transform: translateY(-22px) rotate(6deg); }
+  }
+
+  /* ---------- CELEBRATION OVERLAY ---------- */
+  .celebrate-text{
+    position:relative;
+    margin-top:34px;
+    text-align:center;
+    opacity:0;
+    transform: translateY(18px) scale(.9);
+    transition: opacity .9s ease, transform .9s cubic-bezier(.2,1.4,.4,1);
+  }
+  .celebrate-text.show{
+    opacity:1;
+    transform: translateY(0) scale(1);
+  }
+  .celebrate-text h2{
+    font-family: 'Brush Script MT', Georgia, cursive, serif;
+    font-style: italic;
+    font-size: clamp(34px, 9vw, 58px);
+    margin:0;
+    background: linear-gradient(90deg, var(--rose-deep), var(--lavender), var(--rose-deep));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shine 3s linear infinite;
+  }
+  @keyframes shine{
+    to{ background-position: 200% center; }
+  }
+  .celebrate-text p{
+    margin-top:10px;
+    font-size:14px;
+    letter-spacing:1px;
+    color: var(--ink);
+    opacity:.7;
+    text-transform:uppercase;
+  }
+
+  .scroll-cue{
+    margin-top:40px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    opacity:0;
+    transition: opacity .8s ease 1.4s;
+    cursor:pointer;
+  }
+  .scroll-cue.show{ opacity:.75; }
+  .scroll-cue span{
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color: var(--rose-deep);
+  }
+  .chevron{
+    width:14px;
+    height:14px;
+    border-right:2px solid var(--rose-deep);
+    border-bottom:2px solid var(--rose-deep);
+    transform: rotate(45deg);
+    animation: bounce 1.6s ease-in-out infinite;
+  }
+  @keyframes bounce{
+    0%,100%{ transform: rotate(45deg) translate(0,0); }
+    50%{ transform: rotate(45deg) translate(4px,4px); }
+  }
+
+  /* ---------- SECTION 2: MESSAGE ---------- */
+  .message-section{
+    min-height:100vh;
+    padding:90px 24px 100px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    background:
+      radial-gradient(circle at 20% 90%, #ffd6e8 0%, transparent 45%),
+      radial-gradient(circle at 80% 10%, #e9d3ff 0%, transparent 50%),
+      linear-gradient(180deg, #ffeaf4 0%, var(--cream) 100%);
+    position:relative;
+  }
+
+  .frame{
+    max-width:520px;
+    width:100%;
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(255,255,255,.8);
+    backdrop-filter: blur(6px);
+    border-radius: 26px;
+    padding: 46px 30px 40px;
+    box-shadow: 0 20px 50px rgba(201,66,119,.15);
+    opacity:0;
+    transform: translateY(30px);
+    transition: opacity .9s ease, transform .9s ease;
+  }
+  .frame.reveal{
+    opacity:1;
+    transform: translateY(0);
+  }
+
+  .frame .small-heart{
+    width:34px;
+    height:34px;
+    margin:0 auto 18px;
+    display:block;
+  }
+
+  .frame h3{
+    font-family: Georgia, serif;
+    font-style:italic;
+    font-size: clamp(20px, 5vw, 26px);
+    color: var(--rose-deep);
+    margin: 0 0 18px;
+  }
+
+  .message-placeholder{
+    font-size:15.5px;
+    line-height:1.85;
+    color: var(--ink);
+    opacity:.85;
+    text-align:left;
+  }
+
+  .message-placeholder .edit-tag{
+    display:inline-block;
+    margin-top:22px;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color: var(--lavender);
+    background: rgba(185,142,224,.12);
+    padding:6px 12px;
+    border-radius:20px;
+  }
+
+  .signature{
+    margin-top:30px;
+    font-family: Georgia, serif;
+    font-style:italic;
+    font-size:15px;
+    color: var(--rose-deep);
+    opacity:.8;
+  }
+
+  footer.foot{
+    margin-top:50px;
+    font-size:11px;
+    color: var(--ink);
+    opacity:.35;
+    letter-spacing:1px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ambient decorative hearts -->
+<div class="bg-heart" style="top:8%; left:8%; font-size:26px; animation-delay:.2s; color:#ff9dbf;">♥</div>
+<div class="bg-heart" style="top:15%; right:10%; font-size:18px; animation-delay:1.4s; color:#c9a3ff;">♥</div>
+<div class="bg-heart" style="bottom:18%; left:12%; font-size:20px; animation-delay:.8s; color:#ffb8d1;">♥</div>
+<div class="bg-heart" style="bottom:10%; right:8%; font-size:24px; animation-delay:2s; color:#ff9dbf;">♥</div>
+
+<section class="hero">
+  <div class="eyebrow">Toca el corazón</div>
+  <h1 class="title">Feliz Mesversario</h1>
+  <p class="subtitle">Cada click guarda un pedacito de lo que siento por ti</p>
+
+  <div class="heart-wrap" id="heartWrap">
+    <div class="glow"></div>
+    <svg class="heart-svg" id="heartSvg" viewBox="0 0 200 180">
+      <defs>
+        <linearGradient id="heartGradient" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="#c94277"/>
+          <stop offset="45%" stop-color="#ff6f9c"/>
+          <stop offset="100%" stop-color="#ffb8d1"/>
+        </linearGradient>
+        <clipPath id="heartClip">
+          <path d="M100,175 C40,130 5,95 5,58 C5,28 27,8 55,8 C75,8 92,20 100,38 C108,20 125,8 145,8 C173,8 195,28 195,58 C195,95 160,130 100,175 Z"/>
+        </clipPath>
+      </defs>
+
+      <!-- outline -->
+      <path class="heart-outline" d="M100,175 C40,130 5,95 5,58 C5,28 27,8 55,8 C75,8 92,20 100,38 C108,20 125,8 145,8 C173,8 195,28 195,58 C195,95 160,130 100,175 Z"/>
+
+      <!-- fill, clipped, animated by moving a rect up -->
+      <g clip-path="url(#heartClip)">
+        <rect class="heart-fill fill-mask-rect" id="fillRect" x="0" y="180" width="200" height="0"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="phrase-box">
+    <div class="phrase" id="phrase"></div>
+  </div>
+
+  <div class="hint" id="hint">Toca el corazón para comenzar ✨</div>
+
+  <div class="celebrate-text" id="celebrateText">
+    <h2>¡Feliz Aniversario!</h2>
+    <p>Un mes más, un latido más</p>
+  </div>
+
+  <div class="scroll-cue" id="scrollCue">
+    <span>Sigue bajando</span>
+    <div class="chevron"></div>
+  </div>
+</section>
+
+<section class="message-section" id="messageSection">
+  <div class="frame" id="frame">
+    <svg class="small-heart" viewBox="0 0 200 180">
+      <path fill="#ff6f9c" d="M100,175 C40,130 5,95 5,58 C5,28 27,8 55,8 C75,8 92,20 100,38 C108,20 125,8 145,8 C173,8 195,28 195,58 C195,95 160,130 100,175 Z"/>
+    </svg>
+    <h3>Para ti, mi amor</h3>
+    <div class="message-placeholder">
+      Hola amorcito, y aquí estamos, un mes más, me sorprende cómo hemos logrado llegar hasta aquí, de verdad mi amor, me alegra mucho poder estar en tu vida, poder compartir contigo, poder hacer cosas contigo, muchas gracias por soportarme y aguantarme todo este tiempo, te amo mucho mi preciosa hermosa, vamos por más meses.
+    </div>
+    <div class="signature">te quiere, tu príncipe hermoso &lt;3</div>
+  </div>
+  <footer class="foot">feliz aniversario Amorcito Aless &lt;3</footer>
+</section>
+
+<div class="fx-layer" id="fxLayer"></div>
+
+<script>
+(function(){
+  const phrases = [
+    "Desde que llegaste, mis días tienen otro color 🌸",
+    "Cada mensaje tuyo es el mejor momento de mi día",
+    "Contigo hasta lo simple se vuelve especial",
+    "Amo la forma en la que me haces sentir en calma",
+    "Eres mi persona favorita, sin duda alguna",
+    "Me encanta cómo te ríes de tus propios chistes",
+    "Extrañarte se siente distinto cuando sé que vamos a vernos",
+    "Contigo hasta la distancia se siente más corta",
+    "Admiro lo fuerte y constante que eres",
+    "Me gusta pensar en nuestros planes juntos",
+    "Cada llamada contigo es mi parte favorita del día",
+    "Gracias por tu paciencia, incluso cuando no la merezco",
+    "Contigo aprendí que el amor también se construye despacio",
+    "Me haces querer ser mejor persona",
+    "Nuestras pláticas de horas nunca me cansan",
+    "Amo cómo te emocionas por las cosas pequeñas",
+    "Eres mi lugar seguro, aunque estés lejos",
+    "Gracias por elegirme, un mes más",
+    "Quiero seguir sumando mesversarios contigo",
+    "Te amo más de lo que estas palabras pueden decir"
+  ];
+
+  const TOTAL = phrases.length;
+  let clicks = 0;
+  let locked = false;
+
+  const heartWrap = document.getElementById('heartWrap');
+  const fillRect = document.getElementById('fillRect');
+  const phraseEl = document.getElementById('phrase');
+  const hintEl = document.getElementById('hint');
+  const progressEl = document.getElementById('progress');
+  const celebrateText = document.getElementById('celebrateText');
+  const scrollCue = document.getElementById('scrollCue');
+  const fxLayer = document.getElementById('fxLayer');
+  const frame = document.getElementById('frame');
+  const messageSection = document.getElementById('messageSection');
+
+  // build progress dots
+  for(let i=0;i<TOTAL;i++){
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.id = 'dot-'+i;
+    progressEl.appendChild(d);
+  }
+
+  const FULL_HEIGHT = 175; // svg heart total drawable height approx (y:8 to y:175 -> viewbox 180)
+  const TOP_Y = 8;
+
+  function setFill(percent){
+    // percent 0..1 ; rect grows upward from y=175 (bottom) toward TOP_Y
+    const h = percent * (175 - TOP_Y);
+    const y = 175 - h;
+    fillRect.setAttribute('y', y);
+    fillRect.setAttribute('height', h);
+  }
+
+  function spawnParticles(count, emojiSet, big){
+    const rect = heartWrap.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    for(let i=0;i<count;i++){
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.textContent = emojiSet[Math.floor(Math.random()*emojiSet.length)];
+      const size = big ? (18 + Math.random()*22) : (10 + Math.random()*14);
+      p.style.fontSize = size + 'px';
+      p.style.left = cx + 'px';
+      p.style.top = cy + 'px';
+      p.style.opacity = '1';
+      fxLayer.appendChild(p);
+
+      const angle = Math.random() * Math.PI * 2;
+      const dist = big ? (120 + Math.random()*180) : (60 + Math.random()*120);
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - (big ? 60 : 20);
+      const rot = (Math.random()*720 - 360);
+      const duration = big ? (1400 + Math.random()*900) : (900 + Math.random()*700);
+
+      const anim = p.animate([
+        { transform: 'translate(-50%,-50%) translate(0,0) rotate(0deg) scale(0.4)', opacity: 0 },
+        { transform: 'translate(-50%,-50%) translate('+(dx*0.4)+'px,'+(dy*0.4)+'px) rotate('+(rot*0.4)+'deg) scale(1)', opacity: 1, offset: .18 },
+        { transform: 'translate(-50%,-50%) translate('+dx+'px,'+dy+'px) rotate('+rot+'deg) scale(.8)', opacity: 0 }
+      ], { duration: duration, easing: 'cubic-bezier(.16,.8,.3,1)' });
+
+      anim.onfinish = () => p.remove();
+    }
+  }
+
+  function confettiBurst(){
+    const colors = ['#ff6f9c','#c94277','#ffb8d1','#b98ee0','#ffd166','#fff'];
+    for(let i=0;i<60;i++){
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const w = 6 + Math.random()*6;
+      const h = 10 + Math.random()*10;
+      p.style.width = w+'px';
+      p.style.height = h+'px';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.left = (Math.random()*100) + 'vw';
+      p.style.top = '-20px';
+      p.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+      fxLayer.appendChild(p);
+
+      const fall = 700 + Math.random()*500;
+      const drift = (Math.random()*200 - 100);
+      const rot = Math.random()*720 - 360;
+      const duration = 2600 + Math.random()*1600;
+
+      const anim = p.animate([
+        { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+        { transform: 'translate('+drift+'px,'+fall+'px) rotate('+rot+'deg)', opacity: 1, offset:.7 },
+        { transform: 'translate('+(drift*1.3)+'px, 100vh) rotate('+(rot*1.4)+'deg)', opacity: 0 }
+      ], { duration: duration, easing: 'cubic-bezier(.25,.46,.45,.94)', delay: Math.random()*300 });
+
+      anim.onfinish = () => p.remove();
+    }
+  }
+
+  function showPhrase(text){
+    phraseEl.classList.remove('show');
+    setTimeout(()=>{
+      phraseEl.textContent = text;
+      phraseEl.classList.add('show');
+    }, 180);
+  }
+
+  function handleClick(){
+    if(locked) return;
+    if(clicks >= TOTAL) return;
+
+    clicks++;
+    const percent = clicks / TOTAL;
+    setFill(percent);
+
+    // heartbeat animation
+    const svg = document.getElementById('heartSvg');
+    svg.classList.remove('beat');
+    void svg.offsetWidth; // reflow to restart animation
+    svg.classList.add('beat');
+
+    // light particles each click
+    spawnParticles(10, ['💗','✨','💕'], false);
+
+    // update dot
+    const dot = document.getElementById('dot-'+(clicks-1));
+    if(dot) dot.classList.add('filled');
+
+    // phrase
+    showPhrase(phrases[clicks-1]);
+
+    if(clicks === 1){
+      hintEl.style.opacity = 0;
+    }
+
+    if(clicks >= TOTAL){
+      locked = true;
+      heartWrap.classList.add('locked');
+      hintEl.textContent = '';
+      setTimeout(()=>{
+        spawnParticles(26, ['💖','💗','🎀','✨','💌'], true);
+        confettiBurst();
+        celebrateText.classList.add('show');
+        scrollCue.classList.add('show');
+      }, 500);
+
+      // scroll automático hacia el mensaje, dando tiempo a disfrutar la celebración
+      setTimeout(()=>{
+        messageSection.scrollIntoView({behavior:'smooth'});
+      }, 3200);
+    }
+  }
+
+  heartWrap.addEventListener('click', handleClick);
+  heartWrap.addEventListener('touchend', function(e){
+    e.preventDefault();
+    handleClick();
+  }, {passive:false});
+
+  scrollCue.addEventListener('click', ()=>{
+    messageSection.scrollIntoView({behavior:'smooth'});
+  });
+
+  // reveal message frame when it enters viewport
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        frame.classList.add('reveal');
+      }
+    });
+  }, { threshold: .25 });
+  observer.observe(frame);
+
+  // init
+  setFill(0);
+})();
+</script>
+
+</body>
+</html>
